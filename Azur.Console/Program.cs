@@ -1,7 +1,9 @@
-﻿using System;
-using Microsoft.WindowsAzure.Storage;
-using System.Threading.Tasks;
+﻿using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
+using System;
+using System.Configuration;
+using System.IO;
+using System.Threading.Tasks;
 
 #region Trademark
 
@@ -41,6 +43,7 @@ namespace Azur.Consol
         {
             //  Microsoft Azure Storage Account
             CloudStorageAccount oCloudStorageAccount = null;
+            string strSourceFile = string.Empty;
 
             /* 
              * Retrieve the connection string for use with the application. 
@@ -77,6 +80,29 @@ namespace Azur.Consol
                     }
 
                     #endregion // end of Create Container 
+
+                    #region Upload blobs to the Container
+
+                    // Create a file in your local folder by parameterized to upload to a blob.
+                    string strPath = ConfigurationManager.AppSettings.Get("UploadPath").Trim();
+                    string strFileName = "QuickStart_" + Guid.NewGuid().ToString() + ".txt";
+                    strSourceFile = Path.Combine(strPath, strFileName);
+
+                    // Write text to the file.
+                    File.WriteAllText(strSourceFile, 
+                        string.Format("Demonstrate upload blob - {0}", DateTime.Now.ToString("dd MMM yyyy HH:mm:ss:fffffff")));
+
+                    Console.WriteLine("Temp file = {0}", strSourceFile);
+                    Console.WriteLine("Uploading to Blob storage as blob \"{0}\"", strFileName);
+                    Console.WriteLine();
+
+                    // Get a reference to the blob address, then upload the file to the blob.
+                    // Use the value of strFileName for the blob name.
+                    CloudBlockBlob oCloudBlockBlob = oCloudBlobContainer.GetBlockBlobReference(strFileName);
+                    await oCloudBlockBlob.UploadFromFileAsync(strSourceFile);
+
+                    #endregion // end of Upload blobs to the Container 
+
                 }
                 catch (Exception oException)
                 {
