@@ -89,7 +89,7 @@ namespace Azur.Consol
                     strSourceFile = Path.Combine(strPath, strFileName);
 
                     // Write text to the file.
-                    File.WriteAllText(strSourceFile, 
+                    File.WriteAllText(strSourceFile,
                         string.Format("Demonstrate upload blob - {0}", DateTime.Now.ToString("dd MMM yyyy HH:mm:ss:fffffff")));
 
                     Console.WriteLine("Temp file = {0}", strSourceFile);
@@ -103,6 +103,25 @@ namespace Azur.Consol
 
                     #endregion // end of Upload blobs to the Container 
 
+                    #region Blob List
+
+                    Console.WriteLine("Blobs List");
+                    Console.WriteLine("--------------------");
+                    BlobContinuationToken oBlobContinuationToken = null;
+
+                    do
+                    {
+                        var resultSegment = await oCloudBlobContainer.ListBlobsSegmentedAsync(null, oBlobContinuationToken);
+                        // Get the value of the continuation token returned by the listing call.
+                        oBlobContinuationToken = resultSegment.ContinuationToken;
+                        foreach (IListBlobItem item in resultSegment.Results)
+                        {
+                            Console.WriteLine(item.Uri);
+                        }
+                    } while (oBlobContinuationToken != null); // Loop while the continuation token is not null.
+                    Console.WriteLine();
+
+                    #endregion // end of Blob List
                 }
                 catch (Exception oException)
                 {
