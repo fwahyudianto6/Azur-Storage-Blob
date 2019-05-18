@@ -32,12 +32,13 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("0.0.0.3")]
-[assembly: AssemblyFileVersion("0.0.0.3")]
+[assembly: AssemblyVersion("1.0.0.0")]
+[assembly: AssemblyFileVersion("1.0.0.0")]
 
 /*
  *  0.0.0.1     :   Initial Project
  *  0.0.0.2     :   Upload blobs to the Container
  *  0.0.0.3     :   Get Blobs List
+ *  1.0.0.0     :   Download Blobs
  *  
  */

@@ -44,6 +44,7 @@ namespace Azur.Consol
             //  Microsoft Azure Storage Account
             CloudStorageAccount oCloudStorageAccount = null;
             string strSourceFile = string.Empty;
+            string strDownloadFile = string.Empty;
 
             /* 
              * Retrieve the connection string for use with the application. 
@@ -78,50 +79,65 @@ namespace Azur.Consol
                         };
                         await oCloudBlobContainer.SetPermissionsAsync(oBlobContainerPermissions);
                     }
+                    else
+                    {
+                        #region Upload blobs to the Container
+
+                        // Create a file in your local folder by parameterized to upload to a blob.
+                        string strPath = ConfigurationManager.AppSettings.Get("UploadPath").Trim();
+                        string strFileName = "QuickStart_" + Guid.NewGuid().ToString() + ".txt";
+                        strSourceFile = Path.Combine(strPath, strFileName);
+
+                        // Write text to the file.
+                        File.WriteAllText(strSourceFile,
+                            string.Format("Demonstrate upload blob - {0}", DateTime.Now.ToString("dd MMM yyyy HH:mm:ss:fffffff")));
+
+                        Console.WriteLine("Temp file = {0}", strSourceFile);
+                        Console.WriteLine("Uploading to Blob storage as blob \"{0}\"", strFileName);
+                        Console.WriteLine();
+
+                        // Get a reference to the blob address, then upload the file to the blob.
+                        // Use the value of strFileName for the blob name.
+                        CloudBlockBlob oCloudBlockBlob = oCloudBlobContainer.GetBlockBlobReference(strFileName);
+                        await oCloudBlockBlob.UploadFromFileAsync(strSourceFile);
+
+                        #endregion // end of Upload blobs to the Container 
+
+                        #region Blob List
+
+                        Console.WriteLine("Blobs List");
+                        Console.WriteLine("--------------------");
+                        BlobContinuationToken oBlobContinuationToken = null;
+
+                        do
+                        {
+                            var resultSegment = await oCloudBlobContainer.ListBlobsSegmentedAsync(null, oBlobContinuationToken);
+                            // Get the value of the continuation token returned by the listing call.
+                            oBlobContinuationToken = resultSegment.ContinuationToken;
+                            foreach (IListBlobItem item in resultSegment.Results)
+                            {
+                                Console.WriteLine(item.Uri);
+                            }
+                        } while (oBlobContinuationToken != null); // Loop while the continuation token is not null.
+                        Console.WriteLine();
+
+                        #endregion // end of Blob List
+
+                        #region Download File Created
+
+                        // Download the blob to a local file, using the reference created earlier.
+                        // Append the string "_DOWNLOADED" before the .txt extension so that you can see both files in MyDocuments.
+                        string strDownloadPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "\\Downloads";
+                        string strDownloadFileName = strSourceFile.Replace(".txt", "_DOWNLOADED.txt");
+                        strDownloadFile = Path.Combine(strDownloadPath, Path.GetFileName(strDownloadFileName));
+
+                        Console.WriteLine("Downloading blob to {0}", strDownloadFile);
+                        await oCloudBlockBlob.DownloadToFileAsync(strDownloadFile, FileMode.Create);
+
+                        #endregion // end of Download File Created 
+                    }
 
                     #endregion // end of Create Container 
-
-                    #region Upload blobs to the Container
-
-                    // Create a file in your local folder by parameterized to upload to a blob.
-                    string strPath = ConfigurationManager.AppSettings.Get("UploadPath").Trim();
-                    string strFileName = "QuickStart_" + Guid.NewGuid().ToString() + ".txt";
-                    strSourceFile = Path.Combine(strPath, strFileName);
-
-                    // Write text to the file.
-                    File.WriteAllText(strSourceFile,
-                        string.Format("Demonstrate upload blob - {0}", DateTime.Now.ToString("dd MMM yyyy HH:mm:ss:fffffff")));
-
-                    Console.WriteLine("Temp file = {0}", strSourceFile);
-                    Console.WriteLine("Uploading to Blob storage as blob \"{0}\"", strFileName);
-                    Console.WriteLine();
-
-                    // Get a reference to the blob address, then upload the file to the blob.
-                    // Use the value of strFileName for the blob name.
-                    CloudBlockBlob oCloudBlockBlob = oCloudBlobContainer.GetBlockBlobReference(strFileName);
-                    await oCloudBlockBlob.UploadFromFileAsync(strSourceFile);
-
-                    #endregion // end of Upload blobs to the Container 
-
-                    #region Blob List
-
-                    Console.WriteLine("Blobs List");
-                    Console.WriteLine("--------------------");
-                    BlobContinuationToken oBlobContinuationToken = null;
-
-                    do
-                    {
-                        var resultSegment = await oCloudBlobContainer.ListBlobsSegmentedAsync(null, oBlobContinuationToken);
-                        // Get the value of the continuation token returned by the listing call.
-                        oBlobContinuationToken = resultSegment.ContinuationToken;
-                        foreach (IListBlobItem item in resultSegment.Results)
-                        {
-                            Console.WriteLine(item.Uri);
-                        }
-                    } while (oBlobContinuationToken != null); // Loop while the continuation token is not null.
-                    Console.WriteLine();
-
-                    #endregion // end of Blob List
                 }
                 catch (Exception oException)
                 {
@@ -147,7 +163,7 @@ namespace Azur.Consol
 
 /// <summary>
 /// Microsoft Azure - Blob Storage For .NET 
-/// Demonstrate how to upload, list, download, and delete blobs.
+/// Demonstrate how to upload, list, and download blobs.
 /// 
 ///     <source>
 ///     - https://docs.microsoft.com/en-us/azure/storage/blobs/storage-quickstart-blobs-dotnet?tabs=windows
