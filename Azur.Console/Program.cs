@@ -1,6 +1,7 @@
 ﻿using System;
 using Microsoft.WindowsAzure.Storage;
 using System.Threading.Tasks;
+using Microsoft.WindowsAzure.Storage.Blob;
 
 #region Trademark
 
@@ -13,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace Azur.Consol
 {
-    public static class Program
+    public class Program
     {
         #region Main Method
 
@@ -22,7 +23,7 @@ namespace Azur.Consol
             Console.WriteLine("Microsoft Azure - Blob Storage For .NET");
             Console.WriteLine();
 
-            Execute();
+            ExecuteAsync().GetAwaiter().GetResult();
             Console.WriteLine();
 
             Console.WriteLine("Press any key to exit Azur Application!");
@@ -31,10 +32,12 @@ namespace Azur.Consol
 
         #endregion // end of Main Method
 
-
         #region Method
 
-        private static void Execute()
+        /// <summary>
+        /// Execute Azur Application
+        /// </summary>
+        private static async Task ExecuteAsync()
         {
             //  Microsoft Azure Storage Account
             CloudStorageAccount oCloudStorageAccount = null;
@@ -50,11 +53,34 @@ namespace Azur.Consol
             {
                 try
                 {
-                    Console.WriteLine("Azure - Storage Account is \"Connected\" !");
+                    #region Create Container
+
+                    // Create the CloudBlobClient that represents the Blob storage endpoint for the storage account.
+                    CloudBlobClient oCloudBlobClient = oCloudStorageAccount.CreateCloudBlobClient();
+
+                    // Create a container called 'kti_' and append a GUID value to it to make the name unique.
+                    CloudBlobContainer oCloudBlobContainer = oCloudBlobClient.GetContainerReference("kti");
+
+                    if (!oCloudBlobContainer.Exists())
+                    {
+                        Console.WriteLine("Creating container .....");
+                        await oCloudBlobContainer.CreateIfNotExistsAsync();
+                        Console.WriteLine("Created container '{0}'", oCloudBlobContainer.Name);
+                        Console.WriteLine();
+
+                        // Set the permissions so the blobs are public.
+                        BlobContainerPermissions oBlobContainerPermissions = new BlobContainerPermissions
+                        {
+                            PublicAccess = BlobContainerPublicAccessType.Blob
+                        };
+                        await oCloudBlobContainer.SetPermissionsAsync(oBlobContainerPermissions);
+                    }
+
+                    #endregion // end of Create Container 
                 }
                 catch (Exception oException)
                 {
-                    Console.WriteLine("Error returned from the service : {0}.", oException.Message);
+                    Console.WriteLine("Error : {0}.", oException.Message);
                 }
             }
             else
@@ -69,6 +95,7 @@ namespace Azur.Consol
         #endregion // end of Method         
     }
 }
+
 
 
 #region Notes
